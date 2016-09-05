@@ -1,6 +1,5 @@
 function plotfsa( pool )
 %disable figure display
-end
 set(0, 'DefaultFigureVisible', 'off')
 %loop iterating over every file
 for i=1:1:size(pool.filename,2)
