@@ -281,7 +281,7 @@ try
                 for i=1:1:size(pool.corrFlag,1)
                     for u=1:1:size(pool.corrFlag,2)-1
                         if u==size(pool.corrFlag,2)
-                            pool.corrFlag{i,u} = pool.HpeakCk{i};
+                            pool.corrFlag{i,u} = pool.Mpeaks2{i};
                             pool.corrFlag{i,u}(:,3) = 0;
                         else
                             pool.corrFlag{i,u} = pool.Cpeaks{i,u};
@@ -325,7 +325,7 @@ end
 %alphabetical order of the filenames used !!! NOT !!! the alphabetical order of the
 %accession names !!!
 function selDATA_Callback(hObject, eventdata, pool)
-try
+% try
     if pool.abcheck
         statusbox(pool,'Error: Version expired.');
         guidata(hObject, pool);
@@ -490,7 +490,7 @@ try
             updateWB(pool,size(pool.allFilesData,2),i,1);
             for u=1:1:size(pool.corrFlag,2)
                 if u==size(pool.corrFlag,2)
-                    pool.corrFlag{i,u} = pool.HpeakCk{i};
+                    pool.corrFlag{i,u} = pool.Mpeaks2{i};
                     pool.corrFlag{i,u}(:,3) = 0;
                 else
                     pool.corrFlag{i,u} = pool.Cpeaks{i,u};
@@ -506,9 +506,9 @@ try
         buttoncontrole(pool,1);
     end
     statusbox(pool,'...you may now continue.');
-catch exception
-    sendbugreport( exception,pool );
-end
+% catch exception
+%     sendbugreport( exception,pool );
+% end
 guidata(hObject, pool);
 
 function anaCOMP_Callback(hObject, eventdata, pool)
@@ -518,7 +518,7 @@ try
     plotfsa( pool );
     [ pool ] = dateofanalysis( pool );
     [ pool ] = saveUsercorr( pool );%save user corrected data for analysis
-%     debug_marker_peaks_before_user_corr =  pool.HpeakCk
+%     debug_marker_peaks_before_user_corr =  pool.Mpeaks2
 %     debug_dye_peaks_before_user_corr = pool.Cpeaks
 %     debug_peaks_after_user_corr = pool.corrPeakData
     if strcmp(pool.anaMode,'TBP')
