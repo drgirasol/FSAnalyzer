@@ -31,7 +31,7 @@ for i=1:1:size(pool.allFilesData,2)
     end
     end
 end
-% debug_dispGROUPINGrange = pool.plot.dPointsperBase
+%debug_dispGROUPINGrange = pool.plot.dPointsperBase
 %create distance matrix of all detected peaks
 for i=1:1:size(pool.allFilesData,2)
     updateWB(pool,size(pool.allFilesData,2),i,1);
@@ -154,9 +154,7 @@ for i=1:1:size(pool.allFilesData,2)
 end
 updateWB(pool,size(pool.allFilesData,2),i,0);
 % debug_dispGROUPINGrange = pool.plot.dPointsperBase
-
 if(0)
-    set(0, 'DefaultFigureVisible', 'on')
     for i=1:1:size(pool.allFilesData,2)
         fig = figure;
         plot(pool.allFilesData{i}.Data(5,:));
@@ -164,6 +162,5 @@ if(0)
         plot(pool.Mpeaks2{i}(:,1),pool.Mpeaks2{i}(:,2),'ro')
         hold off;
     end
-    set(0, 'DefaultFigureVisible', 'off')
 end
 end
