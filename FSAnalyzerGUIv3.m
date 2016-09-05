@@ -325,7 +325,7 @@ end
 %alphabetical order of the filenames used !!! NOT !!! the alphabetical order of the
 %accession names !!!
 function selDATA_Callback(hObject, eventdata, pool)
-% try
+try
     if pool.abcheck
         statusbox(pool,'Error: Version expired.');
         guidata(hObject, pool);
@@ -506,9 +506,9 @@ function selDATA_Callback(hObject, eventdata, pool)
         buttoncontrole(pool,1);
     end
     statusbox(pool,'...you may now continue.');
-% catch exception
-%     sendbugreport( exception,pool );
-% end
+catch exception
+    sendbugreport( exception,pool );
+end
 guidata(hObject, pool);
 
 function anaCOMP_Callback(hObject, eventdata, pool)
