@@ -5,6 +5,7 @@ pool.reset.species = [];
 pool.reset.ladder = [];
 pool.reset.fragmentcount = [];
 
+pool.reset.SELdir = pool.SELdir;
 pool.reset.minTH = pool.minTH;
 pool.reset.pcr = pool.pcr;
 pool.reset.statusBOX = pool.statusBOX;

@@ -4,7 +4,7 @@ ladder = pool.ladder';
 figname = strsplit(pool.filename{pool.selF},'.');
 currFILE = strcat('Current File:',{' '},figname(1),{'   '},'(','Selected file:',{' '},num2str(pool.selF),{' '},'/',{' '},num2str(length(pool.filename)),')');
 set(pool.currFILE,'String',currFILE)
-
+axes(pool.plotwindow)
 hold off;pool.plot.dD = plot(pool.allFilesData{pool.selF}.Data(x,:));hold on;
 
 pool.plot.Pks = plot(pool.corrFlag{pool.selF,size(pool.corrFlag,2)}(:,1),pool.corrFlag{pool.selF,size(pool.corrFlag,2)}(:,2),'ro');

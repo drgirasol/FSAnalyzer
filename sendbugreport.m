@@ -16,7 +16,9 @@ Date2 = strcat(num2str(time(1,3)),...
     '.',num2str(round(time(1,6))));
 putname = strcat(Date2,'_BugReport','.mat');
 putpath = strcat(pwd,'\',putname);
-save(putpath,'pool');
+[ pool ] = saloDataset( pool,1 );
+    DSsave = pool.DSsave;
+    save(putpath,'DSsave')
 brSubject = strcat('Bugreport','_',Date);
 ErrorMsg = getReport(exception,'extended','hyperlinks','off');
 BRgui = bugreportdlg;
