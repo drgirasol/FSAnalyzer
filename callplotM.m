@@ -9,7 +9,7 @@ hold off;pool.plot.dD = plot(pool.allFilesData{pool.selF}.Data(x,:));hold on;
 
 pool.plot.Pks = plot(pool.corrFlag{pool.selF,size(pool.corrFlag,2)}(:,1),pool.corrFlag{pool.selF,size(pool.corrFlag,2)}(:,2),'ro');
 
-axis([0+pool.HpeakCk{pool.selF}(1)-500 pool.HpeakCk{pool.selF}(length(pool.HpeakCk{pool.selF}))+500 -250 (max(pool.HpeakCk{pool.selF}(:,2)))+(max(pool.HpeakCk{pool.selF}(:,2))/20)]);
+axis([0+pool.Mpeaks2{pool.selF}(1)-500 pool.Mpeaks2{pool.selF}(length(pool.Mpeaks2{pool.selF}))+500 -250 (max(pool.Mpeaks2{pool.selF}(:,2)))+(max(pool.Mpeaks2{pool.selF}(:,2))/20)]);
 [ pool ] = calcTAGpos( pool );
 for label=1:1:size(pool.sTAGpos,1)
     tags(label) = text(pool.sTAGpos(label),pool.sTAGpos(label)-pool.sTAGpos(label)-100,num2str(pool.ladder(label)),'fontsize',5);
