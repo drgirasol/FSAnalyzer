@@ -3,7 +3,7 @@ delete(pool.plot.pnote);
 figname = strsplit(pool.filename{pool.selF},'.');
 currFILE = strcat('Current File:',{' '},figname(1),{'   '},'(','Selected file:',{' '},num2str(pool.selF),{' '},'/',{' '},num2str(size(pool.filename,2)),')');
 set(pool.currFILE,'String',currFILE)
-
+axes(pool.plotwindow)
 hold off;pool.plot.dD = plot(pool.allFilesData{pool.selF}.Data(pool.selC,:));hold on;
 
 if ~isnumeric(pool.plot.pnote)

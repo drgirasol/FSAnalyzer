@@ -28,6 +28,7 @@ end
 function FSAnalyzerGUIv3_OpeningFcn(hObject, eventdata, pool, varargin)
 warning('off','all')
 [ pool ] = setbugreport( pool );
+pool.SELdir = '';
 pool.plot.pcrB = 0;
 pool.plot.pnote = 0;
 pool.plot.flagC = 0;
@@ -39,7 +40,7 @@ pool.selC = get(pool.DyeNoDend, 'value');%editbox pool
 %1 activates debug mode (disables buttoncontrole function in most cases)
 %0 disables debug mode - ALLWAYS set debug mode to 0 before compiling a
 %unstable version
-pool.debug = 0;
+pool.debug = 1;
 set( gcf, 'toolbar', 'none' )
 %for a better overview all buttons are shown here, for initalisation most
 %buttons will be disabled to avoid program crashes
@@ -57,8 +58,8 @@ set(pool.nextFIG,'enable','on');
 set(pool.tCorrButton,'enable','on');
 %enable buttons
 set(pool.anamar,'enable','off');
-set(pool.loadDS,'enable','off');
-set(pool.saveDS,'enable','off');
+% set(pool.loadDS,'enable','off');
+% set(pool.saveDS,'enable','off');
 set(pool.anacol,'enable','off');
 set(pool.GRA,'enable','off');
 set(pool.ANA,'enable','off');
@@ -200,49 +201,49 @@ guidata(hObject, pool);
 
 function userSelPoint_Callback(hObject, eventdata, pool)
 try
-    set(pool.selDATA,'enable','off');
-    set(pool.saveDS,'enable','off');
-    set(pool.loadDS,'enable','off');
-    set(pool.anamar,'enable','off');
-    set(pool.anacol,'enable','off');
-    set(pool.closeFIG,'enable','off');
-    set(pool.figopen,'enable','off');
-    set(pool.GRA,'enable','off');
-    set(pool.ANA,'enable','off');
-    set(pool.anaCOMP,'enable','off');
-    set(pool.prevFIG,'enable','off');
-    set(pool.nextFIG,'enable','off');
-    set(pool.tCorrButton,'enable','off');
-    CKzoom = zoom;
-    CKpan = pan;
-    if (pool.tPlotSel==0)%toggle on
-        if strcmp(CKzoom.Enable,'on')
-            zoom off;
-            pool.zoom = 1;
-        else
-            pool.zoom = 0;
-        end
-        if strcmp(CKpan.Enable,'on')
-            pan off;
-            pool.pan = 1;
-        else
-            pool.pan = 0;
-        end
-        pool.tPlotSel = 1;
-        pointselectSTART(1);
-    else%toggle off / read modified data
-        if pool.zoom
-            zoom on;
-        end
-        if pool.pan
-            pan on;
-        end
-        pool.tPlotSel = 0;
-        pointselectSTART(0);
-        pool.plot = get(gcf,'userdata');
-        pool.corrFlag = pool.plot.corrFlag;
-        buttoncontrole(pool,1);
+set(pool.selDATA,'enable','off');
+set(pool.saveDS,'enable','off');
+set(pool.loadDS,'enable','off');
+set(pool.anamar,'enable','off');
+set(pool.anacol,'enable','off');
+set(pool.closeFIG,'enable','off');
+set(pool.figopen,'enable','off');
+set(pool.GRA,'enable','off');
+set(pool.ANA,'enable','off');
+set(pool.anaCOMP,'enable','off');
+set(pool.prevFIG,'enable','off');
+set(pool.nextFIG,'enable','off');
+set(pool.tCorrButton,'enable','off');
+CKzoom = zoom;
+CKpan = pan;
+if (pool.tPlotSel==0)%toggle on
+    if strcmp(CKzoom.Enable,'on')
+        zoom off;
+        pool.zoom = 1;
+    else
+        pool.zoom = 0;
     end
+    if strcmp(CKpan.Enable,'on')
+        pan off;
+        pool.pan = 1;
+    else
+        pool.pan = 0;
+    end
+    pool.tPlotSel = 1;
+    pointselectSTART(1);
+else%toggle off / read modified data
+    if pool.zoom
+        zoom on;
+    end
+    if pool.pan
+        pan on;
+    end
+    pool.tPlotSel = 0;
+    pointselectSTART(0);
+    pool.plot = get(gcf,'userdata');
+    pool.corrFlag = pool.plot.corrFlag;
+    buttoncontrole(pool,1);
+end
 catch exception
     sendbugreport( exception,pool );
 end
@@ -281,7 +282,7 @@ try
                 for i=1:1:size(pool.corrFlag,1)
                     for u=1:1:size(pool.corrFlag,2)-1
                         if u==size(pool.corrFlag,2)
-                            pool.corrFlag{i,u} = pool.HpeakCk{i};
+                            pool.corrFlag{i,u} = pool.Mpeaks2{i};
                             pool.corrFlag{i,u}(:,3) = 0;
                         else
                             pool.corrFlag{i,u} = pool.Cpeaks{i,u};
@@ -331,28 +332,45 @@ try
         guidata(hObject, pool);
         return
     end
+    if isempty(pool.SELdir)
+        pool.SELdir = uigetdir;
+        if pool.SELdir == 0
+            statusbox(pool,'Error: No folder choosen.');
+            return;
+        end
+    else
+        SELdir = uigetdir;
+        if SELdir == 0
+            statusbox(pool,'Error: No folder choosen.');
+            return;
+        end
+        if ~strcmp(pool.SELdir,SELdir)
+           pool.anarunning = 0;
+           pool.SELdir = SELdir;
+           pool.reset.SELdir = SELdir;
+        end
+    end
     if pool.anarunning == 0
         [pool] = updatereset( pool );
     end
     buttoncontrole(pool,0);
-    if (exist('PIC','dir') || exist('FIG','dir') || ...%ask new analysis
-            exist('Analysis','dir') || exist('rawDATA','dir') )
+    if ( exist(fullfile(pool.SELdir,'PIC'),'dir') == 7 || ...
+            exist(fullfile(pool.SELdir,'FIG'),'dir') == 7 || ...
+            exist(fullfile(pool.SELdir,'Analysis'),'dir') == 7)
+        
         choice = questdlg('Delete all data before starting a new analysis?', ...
             'New analysis', ...
             'Delete ALL and continue','Delete NONE and continue','Do nothing','Do nothing');
         switch choice
             case 'Delete ALL and continue'
-                if (exist('PIC','dir'))
-                    rmdir('PIC','s');
+                if (exist(fullfile(pool.SELdir,'PIC'),'dir'))
+                    rmdir(fullfile(pool.SELdir,'PIC'),'s');
                 end
-                if (exist('FIG','dir'))
-                    rmdir('FIG','s');
+                if (exist(fullfile(pool.SELdir,'FIG'),'dir'))
+                    rmdir(fullfile(pool.SELdir,'FIG'),'s');
                 end
-                if (exist('Analysis','dir'))
-                    rmdir('Analysis','s');
-                end
-                if (exist('rawDATA','dir'))
-                    rmdir('rawDATA','s');
+                if (exist(fullfile(pool.SELdir,'Analysis'),'dir'))
+                    rmdir(fullfile(pool.SELdir,'Analysis'),'s');
                 end
                 set(pool.currFILE,'String','Current File:');
                 h=get(gcf,'userdata');
@@ -384,127 +402,269 @@ try
                 return;
         end
     end
-    [markerfilename, markerPathname] = uigetfile('*.txt', 'Select Marker File','Multiselect','off');
-    if (markerfilename == 0)
-        set(pool.selDATA,'enable','on');
-        set(pool.closeFIG,'enable','on');
-        set(pool.figopen,'enable','on');
-        statusbox(pool,'Error: No markerfile selected.');
-        if pool.anarunning == 1
-            set(pool.anamar,'enable','on');
-            set(pool.anacol,'enable','on');
-            set(pool.GRA,'enable','on');
-            set(pool.ANA,'enable','on');
-            set(pool.anaCOMP,'enable','on');
-            set(pool.prevFIG,'enable','on');
-            set(pool.nextFIG,'enable','on');
-            set(pool.tCorrButton,'enable','on');
-        end
-        guidata(hObject, pool);
-        return;
+    statusbox(pool,'Choose type of analysis...');
+    [ h ] = anaQuest;
+    anaModeTags = get(h.f,'Userdata');
+    close(h.f);
+    pool.anaMode = '';
+    if find(anaModeTags==1)==1
+        pool.anaMode = 'TBP';
     else
-        fIDladder = fopen(strcat(markerPathname,markerfilename),'r');
-        pool.ladder = [];
-        pool.ladder = fscanf(fIDladder,'%d');
-        pool.fragmentcount = length(pool.ladder);
+        pool.anaMode = 'SSR';
+        pool.reset.ssr.lociUI = [];
     end
-    [speciesname, speciesPathname] = uigetfile('*.txt', 'Select File with species names','Multiselect','off');
-    if (speciesname == 0)
-        set(pool.selDATA,'enable','on');
-        set(pool.closeFIG,'enable','on');
+    statusbox(pool,'...done.');
+    [ filename,ladderpath,sampleIDpath,savefilename,x ] = scanfolder( pool.SELdir );
+    if isempty(filename)
+        filename = '';
         set(pool.figopen,'enable','on');
-        statusbox(pool,'Error: No species description file selected.');
-        if pool.anarunning == 1
-            set(pool.anamar,'enable','on');
-            set(pool.anacol,'enable','on');
-            set(pool.GRA,'enable','on');
-            set(pool.ANA,'enable','on');
-            set(pool.anaCOMP,'enable','on');
-            set(pool.prevFIG,'enable','on');
-            set(pool.nextFIG,'enable','on');
-            set(pool.tCorrButton,'enable','on');
+        set(pool.closeFIG,'enable','on');
+        set(pool.selDATA,'enable','on');
+        statusbox(pool,'Note: No FSA-files detected.')
+        [filename, Pathname] = uigetfile(strcat(pool.SELdir,'\','*.fsa'), 'Select .FSA files','Multiselect','on');
+        x=2;
+        fnvar = 0;
+        fnvar = iscell(filename);
+        if (length(filename) == 1)
+            set(pool.figopen,'enable','on');
+            set(pool.closeFIG,'enable','on');
+            set(pool.selDATA,'enable','on');
+            statusbox(pool,'Error: No FSA-files selected.');
+        elseif (length(filename) > 1 && fnvar == 0)
+            set(pool.figopen,'enable','on');
+            set(pool.closeFIG,'enable','on');
+            set(pool.selDATA,'enable','on');
+            statusbox(pool,'Error: Please select a minimum of two FSA-files.');
+        else
+            pool.filename = [];
+            pool.filename = filename;
+            pool.Pathname = [];
+            pool.Pathname = Pathname;
         end
-        guidata(hObject, pool);
-        return;
-    else
-        pool.species = importdata(strcat(speciesPathname,speciesname));
-        if isnumeric(pool.species)
-            tempspec = pool.species;
-            pool.species = [];
-            for i=1:1:size(tempspec,1)
-                pool.species{i,1} = num2str(tempspec(i));
-            end
-        end
-    end
-    [filename, Pathname] = uigetfile('*.fsa', 'Select .FSA files','Multiselect','on');
-    fnvar = 0;
-    fnvar = iscell(filename);
-    if (length(filename) == 1)
+    elseif (size(filename,2) == 1)
         set(pool.figopen,'enable','on');
         set(pool.closeFIG,'enable','on');
         set(pool.selDATA,'enable','on');
-        statusbox(pool,'Error: no files selected.');
-    elseif (length(filename) > 1 && fnvar == 0)
-        set(pool.figopen,'enable','on');
-        set(pool.closeFIG,'enable','on');
-        set(pool.selDATA,'enable','on');
-        statusbox(pool,'Error: Please select a minimum of two files.');
+        statusbox(pool,'Error: A minimum of two FSA-files is required.');
     else
         pool.filename = [];
         pool.filename = filename;
         pool.Pathname = [];
-        pool.Pathname = Pathname;
+        pool.Pathname = pool.SELdir;
         pool.hash = calchash( pool );
-        [ pool ] = createDIR( pool );
-        if ~strcmpi(strcat(speciesPathname,speciesname),strcat(pool.rawDATA,speciesname))
-            copyfile(strcat(speciesPathname,speciesname),pool.rawDATA,'f');
-        end
-        statusbox(pool,'Reading data...');
-        [ pool ] = readDATA( pool );
-        statusbox(pool,'...done.');
-        statusbox(pool,'Choose type of analysis...');
-        [ h ] = anaQuest;
-        anaModeTags = get(h.f,'Userdata');
-        close(h.f);
-        pool.anaMode = '';
-        if find(anaModeTags==1)==1
-            pool.anaMode = 'TBP';
+    end
+    [ pool ] = createDIR( pool,x );
+    if isempty(ladderpath)
+        set(pool.selDATA,'enable','on');
+        set(pool.closeFIG,'enable','on');
+        set(pool.figopen,'enable','on');
+        statusbox(pool,'Note: No >SizeStandard< detected.');
+        [markerfilename, markerPathname] = uigetfile(strcat(pool.SELdir,'\','*.txt'), 'Select >SizeStandard< file.','Multiselect','off');
+        if (markerfilename == 0)
+            set(pool.selDATA,'enable','on');
+            set(pool.closeFIG,'enable','on');
+            set(pool.figopen,'enable','on');
+            statusbox(pool,'Error: No markerfile selected.');
+            if pool.anarunning == 1
+                set(pool.anamar,'enable','on');
+                set(pool.anacol,'enable','on');
+                set(pool.GRA,'enable','on');
+                set(pool.ANA,'enable','on');
+                set(pool.anaCOMP,'enable','on');
+                set(pool.prevFIG,'enable','on');
+                set(pool.nextFIG,'enable','on');
+                set(pool.tCorrButton,'enable','on');
+            end
+            guidata(hObject, pool);
+            return;
         else
-            pool.anaMode = 'SSR';
-            pool.reset.ssr.lociUI = [];
+            fIDladder = fopen(strcat(markerPathname,markerfilename),'r');
+            pool.ladder = [];
+            pool.ladder = fscanf(fIDladder,'%d');
+            fclose(fIDladder);
+            copyfile(fullfile(markerPathname,markerfilename),pool.SELdir);
+            pool.fragmentcount = length(pool.ladder);
         end
-        
-        statusbox(pool,'...done.');
-        set(pool.DyeNoDend,'String',pool.dyenames);
-        pool.selF = 1;
-        pool.tPlotCorr = 0;
-        pool.tPlotSel = 0;
-        pool.anarunning = 1;
-        statusbox(pool,'Initialising preanalysis...');
-        
-        [ pool ] = peakAdaptM( pool );
-        
-        pool.corrFlag = cell(size(pool.allFilesData,2),size(pool.allFilesData{pool.selF}.Data,1));
-        [ pool ] = peakAdaptC( pool );%save dye peaks
-        for i=1:1:size(pool.corrFlag,1)
-            updateWB(pool,size(pool.allFilesData,2),i,1);
-            for u=1:1:size(pool.corrFlag,2)
-                if u==size(pool.corrFlag,2)
-                    pool.corrFlag{i,u} = pool.HpeakCk{i};
-                    pool.corrFlag{i,u}(:,3) = 0;
-                else
-                    pool.corrFlag{i,u} = pool.Cpeaks{i,u};
-                    pool.corrFlag{i,u}(:,3) = 0;
+    else
+        fIDladder = fopen(ladderpath,'r');
+        pool.ladder = [];
+        pool.ladder = fscanf(fIDladder,'%d');
+        fclose(fIDladder);
+        pool.fragmentcount = length(pool.ladder);
+    end
+    if ~strcmp(pool.anaMode,'SSR')
+        if isempty(sampleIDpath)
+            set(pool.selDATA,'enable','on');
+            set(pool.closeFIG,'enable','on');
+            set(pool.figopen,'enable','on');
+            statusbox(pool,'Note: No SampleIDs file detected.');
+            [speciesname, speciesPathname] = uigetfile(strcat(pool.SELdir,'\','*.txt'), 'Select >SampleIDs< file.','Multiselect','off');
+            if (speciesname == 0)
+                set(pool.selDATA,'enable','on');
+                set(pool.closeFIG,'enable','on');
+                set(pool.figopen,'enable','on');
+                statusbox(pool,'Error: No species description file selected.');
+                if pool.anarunning == 1
+                    set(pool.anamar,'enable','on');
+                    set(pool.anacol,'enable','on');
+                    set(pool.GRA,'enable','on');
+                    set(pool.ANA,'enable','on');
+                    set(pool.anaCOMP,'enable','on');
+                    set(pool.prevFIG,'enable','on');
+                    set(pool.nextFIG,'enable','on');
+                    set(pool.tCorrButton,'enable','on');
+                end
+                guidata(hObject, pool);
+                return;
+            else
+                copyfile(fullfile(speciesPathname,speciesname),pool.SELdir);
+                pool.species = importdata(strcat(speciesPathname,speciesname));
+                if isnumeric(pool.species)
+                    tempspec = pool.species;
+                    pool.species = [];
+                    for i=1:1:size(tempspec,1)
+                        pool.species{i,1} = num2str(tempspec(i));
+                    end
+                end
+            end
+        else
+            pool.species = importdata(sampleIDpath);
+            if isnumeric(pool.species)
+                tempspec = pool.species;
+                pool.species = [];
+                for i=1:1:size(tempspec,1)
+                    pool.species{i,1} = num2str(tempspec(i));
                 end
             end
         end
-        updateWB(pool,size(pool.allFilesData,2),i,0);
-        pool.plot.corrFlag = pool.corrFlag;
-        
-        [ pool ] = callplotM( pool );
-        
-        buttoncontrole(pool,1);
     end
+    if isempty(savefilename)
+        set(pool.selDATA,'enable','on');
+        set(pool.closeFIG,'enable','on');
+        set(pool.figopen,'enable','on');
+        statusbox(pool,'Note: No Saves detected.');
+        [savefilename, savePathname] = uigetfile(strcat(pool.SELdir,'\','*.mat'), 'Select Save *.mat','Multiselect','off');
+        if (savefilename == 0)
+            statusbox(pool,'Note: No Save selected.');
+        else
+            copyfile(strcat(savePathname,savefilename),pool.SELdir)
+            dsfpath = strcat(savePathname,savefilename);
+            DSsave = load(dsfpath);
+            pool.DSsave = DSsave.DSsave;
+            if strcmp(pool.hash,pool.DSsave.hash)
+                [ pool ] = saloDataset( pool,0 );
+                statusbox(pool,'Load successful.');
+                if pool.plot.flagC == 0;
+                    [ pool ] = callplotM( pool );
+                else
+                    hold off;
+                    [ pool ] = callplotC( pool );
+                    hold on;
+                end
+            else
+                statusbox(pool,'Wrong Dataset Hash.');
+            end
+            pool.selF = 1;
+            pool.tPlotCorr = 0;
+            pool.tPlotSel = 0;
+            pool.anarunning = 1;
+            buttoncontrole(pool,1);
+            guidata(hObject, pool);
+            return;
+        end
+    else
+        savePathname = pool.SELdir;
+        if (length(savefilename) == 1)
+            dsfpath = strcat(savePathname,'\',savefilename);
+            DSsave = load(dsfpath{1});
+            pool.DSsave = DSsave.DSsave;
+            if strcmp(pool.hash,pool.DSsave.hash)
+                [ pool ] = saloDataset( pool,0 );
+                statusbox(pool,'Load successful.');
+                if pool.plot.flagC == 0;
+                    [ pool ] = callplotM( pool );
+                else
+                    hold off;
+                    [ pool ] = callplotC( pool );
+                    hold on;
+                end
+            else
+                statusbox(pool,'Wrong Dataset Hash.');
+            end
+            pool.selF = 1;
+            pool.tPlotCorr = 0;
+            pool.tPlotSel = 0;
+            pool.anarunning = 1;
+            buttoncontrole(pool,1);
+            guidata(hObject, pool);
+            return;
+        elseif (length(savefilename) > 1)
+            [savefilename, savePathname] = uigetfile(strcat(pool.SELdir,'\','*.mat'), 'Select Save *.mat','Multiselect','off');
+            if (savefilename == 0)
+                statusbox(pool,'Note: No Save selected.');
+            else
+                dsfpath = strcat(savePathname,savefilename);
+                DSsave = load(dsfpath);
+                pool.DSsave = DSsave.DSsave;
+                if strcmp(pool.hash,pool.DSsave.hash)
+                    [ pool ] = saloDataset( pool,0 );
+                    statusbox(pool,'Load successful.');
+                    if pool.plot.flagC == 0;
+                        [ pool ] = callplotM( pool );
+                    else
+                        hold off;
+                        [ pool ] = callplotC( pool );
+                        hold on;
+                    end
+                else
+                    statusbox(pool,'Wrong Dataset Hash.');
+                end
+                pool.selF = 1;
+                pool.tPlotCorr = 0;
+                pool.tPlotSel = 0;
+                pool.anarunning = 1;
+                buttoncontrole(pool,1);
+                guidata(hObject, pool);
+                return;
+            end
+        end
+        
+    end
+    statusbox(pool,'Reading data...');
+    [ pool ] = readDATA( pool );
+    statusbox(pool,'...done.');
+    set(pool.DyeNoDend,'String',pool.dyenames);
+    pool.selF = 1;
+    pool.tPlotCorr = 0;
+    pool.tPlotSel = 0;
+    pool.anarunning = 1;
+    
+    statusbox(pool,'Initialising preanalysis...');
+    
+    [ pool ] = peakAdaptM( pool );
+    
+    pool.corrFlag = cell(size(pool.allFilesData,2),size(pool.allFilesData{pool.selF}.Data,1));
+    [ pool ] = peakAdaptC( pool );%save dye peaks
+    for i=1:1:size(pool.corrFlag,1)
+        updateWB(pool,size(pool.allFilesData,2),i,1);
+        for u=1:1:size(pool.corrFlag,2)
+            if u==size(pool.corrFlag,2)
+                pool.corrFlag{i,u} = pool.Mpeaks2{i};
+                pool.corrFlag{i,u}(:,3) = 0;
+            else
+                pool.corrFlag{i,u} = pool.Cpeaks{i,u};
+                pool.corrFlag{i,u}(:,3) = 0;
+            end
+        end
+    end
+    updateWB(pool,size(pool.allFilesData,2),i,0);
+    
+    pool.plot.corrFlag = pool.corrFlag;
+    
+    [ pool ] = callplotM( pool );
+    
+    buttoncontrole(pool,1);
+    
     statusbox(pool,'...you may now continue.');
 catch exception
     sendbugreport( exception,pool );
@@ -518,9 +678,9 @@ try
     plotfsa( pool );
     [ pool ] = dateofanalysis( pool );
     [ pool ] = saveUsercorr( pool );%save user corrected data for analysis
-%     debug_marker_peaks_before_user_corr =  pool.HpeakCk
-%     debug_dye_peaks_before_user_corr = pool.Cpeaks
-%     debug_peaks_after_user_corr = pool.corrPeakData
+    %     debug_marker_peaks_before_user_corr =  pool.Mpeaks2
+    %     debug_dye_peaks_before_user_corr = pool.Cpeaks
+    %     debug_peaks_after_user_corr = pool.corrPeakData
     if strcmp(pool.anaMode,'TBP')
         statusbox(pool,'Initialising analysis of data...');
         buttoncontrole(pool,0);
@@ -736,25 +896,23 @@ guidata(hObject, pool);
 function loadDS_Callback(hObject, eventdata, pool)
 try
     buttoncontrole(pool,0);
-    [dsname, dspath] = uigetfile('*.mat', 'Select fitting saved Dataset','Multiselect','off');
+    [dsname, dspath] = uigetfile(strcat(pool.SELdir,'\','*.mat'), 'Select fitting saved Dataset','Multiselect','off');
     if dsname~=0;
         dsfpath = strcat(dspath,dsname);
-        dsloaded = load(dsfpath);
-        if strcmp(dsloaded.savehash,pool.hash);%check for hash identity
-            pool.corrFlag = [];
-            pool.plot.corrFlag = [];
-            pool.corrFlag = dsloaded.corrFlag;
-            pool.plot.corrFlag = dsloaded.corrFlag;
+        DSsave = load(dsfpath);
+        pool.DSsave = DSsave.DSsave;
+        if strcmp(pool.hash,pool.DSsave.hash)
+            [ pool ] = saloDataset( pool,0 );
             statusbox(pool,'Load successful.');
+            if pool.plot.flagC == 0;
+                [ pool ] = callplotM( pool );
+            else
+                hold off;
+                [ pool ] = callplotC( pool );
+                hold on;
+            end
         else
-            statusbox(pool,'Error: Wrong DataSet ID.');
-        end
-        if pool.plot.flagC == 0;
-            [ pool ] = callplotM( pool );
-        else
-            hold off;
-            [ pool ] = callplotC( pool );
-            hold on;
+            statusbox(pool,'Wrong Dataset Hash.');
         end
     else
         statusbox(pool,'Error: No dataset selected.');
@@ -767,13 +925,13 @@ guidata(hObject, pool);
 
 function saveDS_Callback(hObject, eventdata, pool)
 try
-    [putname, putpath] = uiputfile('*.mat', 'Name your dataset');
+    [ pool ] = saloDataset( pool,1 );
+    DSsave = pool.DSsave;
+    [putname, ~] = uiputfile(strcat(pool.SELdir,'\','*.mat'), 'Name your dataset');
     if putname == 0
         statusbox(pool,'Save aborted.');
     else
-        savehash = pool.hash;
-        corrFlag = pool.corrFlag;
-        save(strcat(putpath,putname),'corrFlag','savehash');
+        save(strcat(pool.SELdir,'\',putname),'DSsave')
         statusbox(pool,'Save successful.');
     end
 catch exception
